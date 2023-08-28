@@ -2,10 +2,20 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
-import { faCloud, faWind } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCloud,
+  faWind,
+  faLocationDot,
+} from "@fortawesome/free-solid-svg-icons";
+import Geolocator from "./Geolocator";
 
 function App() {
-  const [geoDataCity, setGeoDataCity] = useState("");
+  const [city, setCity] = useState("London");
+
+  const handleGeoDataCityChange = (userLocation) => {
+    setCity(userLocation);
+  };
+
   const [error, setError] = useState(null); // State to hold error messages
   const [data, setData] = useState({
     name: "",
@@ -13,35 +23,8 @@ function App() {
     weather: [{ icon: "", description: "" }],
     wind: { speed: "" },
   });
-  const [city, setCity] = useState("");
   const [unit, setUnit] = useState("metric");
   const imageURL = data.weather[0].icon;
-
-  const handleUserLocation = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        const key = "5dde358276914a6cb8e59220ea920bdc";
-        const geolocatorAPI = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${key}`;
-
-        fetch(geolocatorAPI)
-          .then((response) => {
-            console.log(geolocatorAPI);
-            return response.json();
-          })
-          .then((jsonData) => {
-            setGeoDataCity(jsonData.results[0].components.city);
-            console.log(jsonData.results[0].components.city);
-          })
-          .catch((error) => {
-            console.error("Error fetching data:", error);
-          });
-      });
-    } else {
-      console.log("Geolocator not available!");
-    }
-  };
 
   const cityCapture = (e) => {
     setCity(e.target.value);
@@ -51,6 +34,8 @@ function App() {
     const API_KEY = "15cb84f4e344b04d57a4e0e7e291d6a7";
     const API = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=${unit}`;
     setError(null); // Clear previous errors
+
+    // console.log(API);
     fetch(API)
       .then((response) => {
         if (!response.ok) {
@@ -66,17 +51,19 @@ function App() {
       .catch((error) => {
         setError(error.message);
       });
-
-    // e.preventDefault();
   };
 
   useEffect(() => {
-    handleUserLocation();
     apiGet(); //Call the apiGet function when the component mounts
-  }, [unit]); //Call the apiGet function whenever the unit changes
+  }, [city]); //Call the apiGet function whenever the unit changes
+
+  useEffect(() => {
+    apiGet(); //Call the apiGet function when the component mounts
+  }, [unit]);
 
   return (
     <div className="container">
+      {/* <Geolocator userData={handleGeoDataCityChange} /> */}
       <div className="form">
         <input
           type="text"
@@ -93,6 +80,7 @@ function App() {
         </div>
       </div>
       <div className="formatSelect">
+        <Geolocator userData={handleGeoDataCityChange} />
         <select
           name="format"
           id="format"
